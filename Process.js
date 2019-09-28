@@ -2,8 +2,8 @@ const QBit = require("./QBit");
 const lib = require("./lib");
 
 class Process {
-    constructor() {
-        this.qbits = [];
+    constructor(qbits = []) {
+        this.qbits = qbits;
         this.pipeline = [];
         this.populateQbits();
     }

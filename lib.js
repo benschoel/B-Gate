@@ -12,6 +12,20 @@ const PauliX = toOp => {
     };
 };
 
+const PauliZ = toOp => {
+    const state = [[1, 0], [0, -1]];
+
+    return {
+        run: qbits => {
+            for (var i = 0; i < toOp.length; i++) {
+                const bitIndex = toOp[i];
+                qbits[bitIndex].set(mul(state, qbits[bitIndex].value()));
+            }
+            return qbits;
+        }
+    };
+};
+
 const HGate = toOp => {
     const state = [[1 / Math.sqrt(2), 1 / Math.sqrt(2)], [1 / Math.sqrt(2), -1 / Math.sqrt(2)]];
 
@@ -46,8 +60,26 @@ const CNOTGate = bits => {
         run: qbits => {
             const control = bits[0];
             const target = bits[1];
-            qbits[control].entangle(qbits[control], qbits[target]);
-            qbits[target].entangle(qbits[control], qbits[target]);
+            qbits[control].entangle([qbits[control], qbits[target]]);
+            qbits[target].entangle([qbits[control], qbits[target]]);
+            return qbits;
+        }
+    };
+};
+
+const Toffoli = bits => {
+    if (bits.length !== 3) {
+        throw new Error("Toffoli gate operates on three bits at a time.");
+    }
+
+    return {
+        run: qbits => {
+            const c1 = bits[0];
+            const c2 = bits[1];
+            const t = bits[2];
+            qbits[c1].entangle([qbits[c1], qbits[c2], qbits[t]]);
+            qbits[c2].entangle([qbits[c1], qbits[c2], qbits[t]]);
+            qbits[t].entangle([qbits[c1], qbits[c2], qbits[t]]);
             return qbits;
         }
     };
@@ -99,8 +131,10 @@ const createGate = (type, bits) => {
         return MeasureGate(bits);
     } else if (type === "PAULIX") {
         return PauliX(bits);
-    } else if (type === "BLACKBOX") {
-        return BlackBox(bits);
+    } else if (type === "PAULIZ") {
+        return PauliZ(bits);
+    } else if (type === "TOFFOLI") {
+        return Toffoli(bits);
     } else {
         throw new Error("No gate with the name: " + type);
     }
